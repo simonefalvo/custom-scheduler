@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custom-scheduler
+  labels:
+    app: custom-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: custom-scheduler
+  template:
+    metadata:
+      labels:
+        app: custom-scheduler
+    spec:
+      serviceAccount: custom-scheduler
+      containers:
+        - name: custom-scheduler
+          image: smvfal/custom-scheduler
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 8082
+          env:
+          - name: ENDPOINT
+            value: "http://placement-resolver:8080/placement/roundrobin"
+            #value: "http://placement-resolver:8080/placement/greedyfirstfit"

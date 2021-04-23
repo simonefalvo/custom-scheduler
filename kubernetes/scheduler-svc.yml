@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+    name: custom-scheduler
+spec:
+    type: ClusterIP # or NodePort, etc.
+    ports:
+    - name: http
+      port: 8082
+      targetPort: 8082
+      protocol: TCP
+    selector:
+      app: custom-scheduler
