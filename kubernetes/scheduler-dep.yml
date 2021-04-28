@@ -25,3 +25,10 @@ spec:
           - name: ENDPOINT
             value: "http://placement-resolver:8080/placement/roundrobin"
             #value: "http://placement-resolver:8080/placement/greedyfirstfit"
+            #value: "http://placement-resolver:8080/placement/networkawareheuristic/min/{maxDelay}"
+            #value: "http://placement-resolver:8080/placement/networkawareheuristic/spread/{maxDelay}"
+            #value: "http://placement-resolver:8080/placement/networkawareilp/min/{maxDelay}"
+            #value: "http://placement-resolver:8080/placement/networkawareilp/spread/{maxDelay}"
+      nodeSelector:
+        faasRole: controller
+            
