@@ -236,19 +236,25 @@ func (s *Scheduler) createJSONNodes() (listStructNodes []NodeDescriptor, err err
 		fmt.Printf("Labels of node : %+v\n", m)
 
 		zone, ok := m["zone"]
-
 		if !ok {
 			zone = "0"
 		}
 
 		isControlNode, ok := m["isControlNode"]
-
 		if !ok {
 			isControlNode = "0"
+		} else {
+			// ignore controller nodes
+			continue
+		}
+
+		faasRole, ok := m["faasRole"]
+		if ok && faasRole == "gateway" {
+			// ignore gateway nodes
+			continue
 		}
 
 		size, ok := m["size"]
-
 		if !ok {
 			size = "S"
 		}
