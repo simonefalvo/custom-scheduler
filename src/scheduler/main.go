@@ -53,8 +53,8 @@ type PodDescriptor struct {
 	UID             string  `json:"UID"`
 	CpuReqs         float64 `json:"cpuReqs"`
 	CpuLimits       float64 `json:"cpuLimits"`
-	MemoryReqs      float64 `json:"memoryReqs"`
-	MemoryLimits    float64 `json:"memoryLimits"`
+	MemoryReqs      float64 `json:"memReqs"`
+	MemoryLimits    float64 `json:"memLimits"`
 	ApplicationName string  `json:"applicationName"`
 	IsQueue         string  `json:"isQueue"`
 }
@@ -381,16 +381,14 @@ func (s *Scheduler) SchedulePods2() error {
 				fmt.Println(message)
 			}
 		}
-
 	}
 	return nil
-
 }
 
 func (s *Scheduler) utilizedResourceByNode(node *v1.Node) (cpuLimitsVal, memoryLimitsVal float64) {
 
 	pods, err := s.clientset.CoreV1().Pods("").List(metav1.ListOptions{
-		FieldSelector: "spec.nodeName=" + node.GetName() + ",spec.schedulerName=" + schedulerName,
+		FieldSelector: "spec.nodeName=" + node.GetName(),
 	})
 
 	if err != nil {
