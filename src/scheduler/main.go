@@ -27,6 +27,8 @@ import (
 const schedulerName = "custom-scheduler"
 const endpointEnvName = "ENDPOINT"
 const defaultEndpoint = "http://172.17.0.1:8081/resolve"
+const nodeReservedCpu = 100.0
+const nodeReservedMem = 0.0
 
 // Scheduler represents a kubernetes scheduler
 type Scheduler struct {
@@ -222,15 +224,19 @@ func (s *Scheduler) createJSONNodes() (listStructNodes []NodeDescriptor, err err
 
 	for i := range nodes {
 		log.Printf("  Found node: %s", nodes[i].GetName())
-		cpuLimits, memoryLimits := s.utilizedResourceByNode(nodes[i])
+		cpuReqs, memoryReqs := s.utilizedResourceByNode(nodes[i])
 
 		memQuantity := nodes[i].Status.Allocatable[v1.ResourceMemory]
-		totalMemAvail := float64(memQuantity.Value()) - memoryLimits
-		log.Printf("  - Resource Memory: node %f, allocated %f, available %f\n", float64(memQuantity.Value()), memoryLimits, totalMemAvail)
+		memAllocatable := float64(memQuantity.Value()) - nodeReservedMem
+		totalMemAvail := memAllocatable - memoryReqs
+		log.Printf("  - Resource Memory: allocatable %f, allocated %f, available %f\n",
+			memAllocatable, memoryReqs, totalMemAvail)
 
 		cpuQuantity := nodes[i].Status.Allocatable[v1.ResourceCPU]
-		totalCPUAvail := float64(cpuQuantity.Value())*1000.0 - cpuLimits
-		log.Printf("  - Resource CPU: node %f, allocated %f, available %f\n", float64(cpuQuantity.Value()*1000.0), cpuLimits, totalCPUAvail)
+		cpuAllocatable := float64(cpuQuantity.Value())*1000.0 - nodeReservedCpu
+		totalCPUAvail := cpuAllocatable - cpuReqs
+		log.Printf("  - Resource CPU: allocatable %f, allocated %f, available %f\n",
+			cpuAllocatable, cpuReqs, totalCPUAvail)
 
 		m := nodes[i].GetLabels()
 		fmt.Printf("Labels of node : %+v\n", m)
@@ -385,7 +391,7 @@ func (s *Scheduler) SchedulePods2() error {
 	return nil
 }
 
-func (s *Scheduler) utilizedResourceByNode(node *v1.Node) (cpuLimitsVal, memoryLimitsVal float64) {
+func (s *Scheduler) utilizedResourceByNode(node *v1.Node) (cpuReqsVal, memoryReqsVal float64) {
 
 	pods, err := s.clientset.CoreV1().Pods("").List(metav1.ListOptions{
 		FieldSelector: "spec.nodeName=" + node.GetName(),
@@ -402,10 +408,10 @@ func (s *Scheduler) utilizedResourceByNode(node *v1.Node) (cpuLimitsVal, memoryL
 	}
 
 	cpuReqs, cpuLimits, memoryReqs, memoryLimits := reqs[v1.ResourceCPU], limits[v1.ResourceCPU], reqs[v1.ResourceMemory], limits[v1.ResourceMemory]
-	cpuReqsVal := float64(cpuReqs.MilliValue())
-	cpuLimitsVal = float64(cpuLimits.MilliValue())
-	memoryReqsVal := float64(memoryReqs.Value())
-	memoryLimitsVal = float64(memoryLimits.Value())
+	cpuReqsVal = float64(cpuReqs.MilliValue())
+	cpuLimitsVal := float64(cpuLimits.MilliValue())
+	memoryReqsVal = float64(memoryReqs.Value())
+	memoryLimitsVal := float64(memoryLimits.Value())
 
 	log.Printf("  cpuReqs: %d, cpuLimits: %d, memoryReqs: %d, memoryLimits: %d\n", int64(cpuReqsVal), int64(cpuLimitsVal), int64(memoryReqsVal), int64(memoryLimitsVal))
 
